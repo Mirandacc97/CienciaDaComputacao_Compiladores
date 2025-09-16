@@ -15,6 +15,10 @@ public class Scanner {
   private int pos;
   private String[] palavrasReservadas;
 
+  public void setPalavrasReservadas(String[] palavrasReservadas) {
+    this.palavrasReservadas = palavrasReservadas;
+  }
+
   public Scanner(String filename) throws Exception {
     Path arquivo = Paths.get(filename);
     if (!arquivo.toFile().exists())
@@ -45,20 +49,20 @@ public class Scanner {
     while (!isEoF()) {
       currentChar = nextChar();
 
+
       if (currentChar == '#') {
+
         while (!isEoF()) {
           currentChar = nextChar();
-          content += currentChar;
           if (currentChar == '\n' || currentChar == '\r') {
-            return new Token(TokenType.COMMENT, content);
+            break;
           }
         }
-        return new Token(TokenType.COMMENT, content);
+        continue;
       }
-
       if (currentChar == '/' ) {
         currentChar = nextChar();
-        if (currentChar == '*') {
+        if (currentChar == '*')
           while (!isEoF()) {
             currentChar = nextChar();
             if (currentChar == '*' ) {
@@ -68,8 +72,7 @@ public class Scanner {
               }
             }
           }
-        }
-        continue;
+          continue;
       }
 
       if (currentChar == ' ' || currentChar == '\t' || currentChar == '\n' || currentChar == '\r') {
@@ -185,33 +188,17 @@ public class Scanner {
   }
 
   private boolean isLetter(char c) { return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'); }
-
   private boolean isDigit(char c) { return c >= '0' && c <= '9'; }
-
   private boolean isMathOperator(char c) { return c == '+' || c == '-' || c == '*' || c == '/'; }
-
   private boolean isRelOperator(char c) { return c == '>' || c == '<' || c == '!'; }
-
   private boolean isAssignment(char c) { return c == '='; }
-
   private boolean isunderline(char c) { return c == '_'; }
-
   private boolean isLeftRelatives(char c) { return c == '('; }
-
   private boolean isRightRelatives(char c) { return c == ')'; }
-
   private boolean isPOINT(char c) { return c == '.'; }
-
   private char nextChar() { return sourceCode[pos++]; }
-
   private void back() { pos--; }
-
   private boolean isEoF() { return pos >= sourceCode.length; }
-
-  public void setPalavrasReservadas(String[] palavrasReservadas) {
-    this.palavrasReservadas = palavrasReservadas;
-  }
-
   private static String obtemConteudoArquivo(String filename) throws Exception {
     Path arquivo = Paths.get(filename);
     if (arquivo == null) throw new Exception("Arquivo não encontrado!");
