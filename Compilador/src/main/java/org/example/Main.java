@@ -11,15 +11,7 @@ public class Main {
    * Long: comecando digitos
    * */
 
-  public static void main(String[] args) throws Exception {
-    // O Scanner é criado aqui
-    Scanner sc = new Scanner("programa.javeco");
-
-    String[] palavrasReservadas = {"if", "else", "while", "for", "int", "float", "string"};
-    sc.setPalavrasReservadas(palavrasReservadas);
-
-
-    System.out.println("Leitura finalizada! Arquivo reconhecido e o mesmo contem código a ser compilado!");
+  public static void main(String[] args) {
     try {
       System.out.println("Bem vindo ao Compilar de linguagem Javeco!");
       System.out.println("==================== D i r e t i v a s   d o   p r o j e t o ====================");
@@ -28,7 +20,14 @@ public class Main {
       System.out.println("  Long: comecando digitos");
 
       System.out.println("Vamor iniciar efetuando a leitura do nosso arquivo");
-      System.out.println("Vamos inicialmente localizar os identificadores lexicos");
+      Scanner sc = new Scanner("programa.javeco");
+      System.out.println("Leitura finalizada! Arquivo reconhecido e o mesmo contem código a ser compilado!");
+
+      System.out.println("Vamor efetuar a insercao das palavras reservadas");
+      sc.palavrasReservadas = new String[]{"if", "else", "while", "for", "int", "float", "string"};
+      System.out.println("Insercao efetuada com sucesso");
+
+      System.out.println("Agora, com tudo estruturado, vamos testar");
       Token tk;
       do {
         tk = sc.nextToken();

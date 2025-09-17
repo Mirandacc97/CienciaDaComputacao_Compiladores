@@ -5,7 +5,9 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import util.TokenType;
 
 public class Scanner {
@@ -13,11 +15,9 @@ public class Scanner {
   private String contentFile;
   private char[] sourceCode;
   private int pos;
-  private String[] palavrasReservadas;
+  public String[] palavrasReservadas;
 
-  public void setPalavrasReservadas(String[] palavrasReservadas) {
-    this.palavrasReservadas = palavrasReservadas;
-  }
+  private final List<Character> caracteresProibidos = Arrays.asList('@', '`', '´', 'ç', '¨','~', '^');
 
   public Scanner(String filename) throws Exception {
     Path arquivo = Paths.get(filename);
@@ -41,7 +41,7 @@ public class Scanner {
     return new Token(TokenType.IDENTIFIER, content);
   }
 
-  public Token nextToken() {
+  public Token nextToken() throws Exception {
     char currentChar;
     String content = "";
     state = 0;
@@ -49,30 +49,38 @@ public class Scanner {
     while (!isEoF()) {
       currentChar = nextChar();
 
-
+      //Questao 8 -> Comentario de linha unica
       if (currentChar == '#') {
-
         while (!isEoF()) {
-          currentChar = nextChar();
+          currentChar = nextCharInComment();
           if (currentChar == '\n' || currentChar == '\r') {
             break;
           }
         }
         continue;
       }
+
+      //Questao 8 -> Comentario de multiplas linhas
       if (currentChar == '/' ) {
-        currentChar = nextChar();
-        if (currentChar == '*')
+        currentChar = nextCharInComment();
+        if (currentChar == '*') {
+          currentChar = nextCharInComment();
+          boolean fim = false;
           while (!isEoF()) {
-            currentChar = nextChar();
             if (currentChar == '*' ) {
+              currentChar = nextCharInComment();
+              if (currentChar == '/')
+                fim = true;
+            }
+            if (fim) {
+              //Sai do '/' para o proximo caractere
               currentChar = nextChar();
-              if (currentChar == '/') {
-                break;
-              }
+              break;
             }
           }
-          continue;
+          if (!fim)
+            throw new Exception("Fim do comentario de multiplas linhas desconhecido!");
+        }
       }
 
       if (currentChar == ' ' || currentChar == '\t' || currentChar == '\n' || currentChar == '\r') {
@@ -112,6 +120,8 @@ public class Scanner {
             content += currentChar;
             return new Token(TokenType.RIGHT_RELATIVES, content);
           } else {
+            if (caracteresProibidos.contains(currentChar))
+              throw new Exception("Caractere invalido inserido :'" + currentChar + "'");
             throw new RuntimeException("Caractere não reconhecido: " + currentChar);
           }
           break;
@@ -196,7 +206,18 @@ public class Scanner {
   private boolean isLeftRelatives(char c) { return c == '('; }
   private boolean isRightRelatives(char c) { return c == ')'; }
   private boolean isPOINT(char c) { return c == '.'; }
-  private char nextChar() { return sourceCode[pos++]; }
+  private char nextChar() throws Exception {
+    char caracter = sourceCode[pos++];
+    if (caracteresProibidos.contains(caracter))
+      throw new Exception("Caracter inválido inserido :'" + caracter + "'");
+    return caracter;}
+  private char nextCharInComment() throws Exception {
+    try {
+      return nextChar();
+    } catch (Exception e) {
+      //Sem comentario, so quero guardar essa excecao para caso seja dentro de uma string ele nao de erro
+    }
+    return sourceCode[pos++]; }
   private void back() { pos--; }
   private boolean isEoF() { return pos >= sourceCode.length; }
   private static String obtemConteudoArquivo(String filename) throws Exception {
