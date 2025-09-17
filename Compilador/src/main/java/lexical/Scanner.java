@@ -1,11 +1,9 @@
 package lexical;
 
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import util.TokenType;
@@ -15,6 +13,8 @@ public class Scanner {
   private String contentFile;
   private char[] sourceCode;
   private int pos;
+  private int linhaPos;
+  private int colunaPos;
   public String[] palavrasReservadas;
 
   private final List<Character> caracteresProibidos = Arrays.asList('@', '`', '´', 'ç', '¨','~', '^');
@@ -29,6 +29,8 @@ public class Scanner {
     contentFile = new String(bytesArquivo, StandardCharsets.UTF_8);
     sourceCode = contentFile.toCharArray();
     pos = 0;
+    linhaPos = 1;
+    colunaPos = 1;
     this.palavrasReservadas = new String[0];
   }
 
@@ -121,8 +123,8 @@ public class Scanner {
             return new Token(TokenType.RIGHT_RELATIVES, content);
           } else {
             if (caracteresProibidos.contains(currentChar))
-              throw new Exception("Caractere invalido inserido :'" + currentChar + "'");
-            throw new RuntimeException("Caractere não reconhecido: " + currentChar);
+              throw new Exception("Caractere inválido inserido '" + currentChar + "' na linha " + linhaPos + ", coluna " + colunaPos);
+            throw new RuntimeException("Caractere não reconhecido '" + currentChar + "' na linha " + linhaPos + ", coluna " + colunaPos);
           }
           break;
 
@@ -206,20 +208,45 @@ public class Scanner {
   private boolean isLeftRelatives(char c) { return c == '('; }
   private boolean isRightRelatives(char c) { return c == ')'; }
   private boolean isPOINT(char c) { return c == '.'; }
+
   private char nextChar() throws Exception {
     char caracter = sourceCode[pos++];
+    if (caracter == '\n') {
+      linhaPos++;
+      colunaPos = 1;
+    } else
+      colunaPos++;
     if (caracteresProibidos.contains(caracter))
-      throw new Exception("Caracter inválido inserido :'" + caracter + "'");
-    return caracter;}
+      throw new Exception("Caractere invalido inserido '" + caracter + "' na linha " + linhaPos + ", coluna " + colunaPos);
+    return caracter;
+  }
+
   private char nextCharInComment() throws Exception {
     try {
       return nextChar();
     } catch (Exception e) {
-      //Sem comentario, so quero guardar essa excecao para caso seja dentro de uma string ele nao de erro
+      //Sem excecao, so para comentarios sem gerar erro
     }
-    return sourceCode[pos++]; }
-  private void back() { pos--; }
+    return sourceCode[pos++];
+  }
+
+  private void back() {
+    pos--;
+    if (pos < sourceCode.length) {
+      char c = sourceCode[pos];
+      if (c == '\n') {
+        linhaPos--;
+        colunaPos = 1;
+      } else {
+        colunaPos--;
+        if (colunaPos < 1)
+          colunaPos = 1;
+      }
+    }
+  }
+
   private boolean isEoF() { return pos >= sourceCode.length; }
+
   private static String obtemConteudoArquivo(String filename) throws Exception {
     Path arquivo = Paths.get(filename);
     if (arquivo == null) throw new Exception("Arquivo não encontrado!");
