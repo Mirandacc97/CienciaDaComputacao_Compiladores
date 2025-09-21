@@ -63,25 +63,22 @@ public class Scanner {
       }
 
       //Questao 8 -> Comentario de multiplas linhas
-      if (currentChar == '/' ) {
-        currentChar = nextCharInComment();
-        if (currentChar == '*') {
-          currentChar = nextCharInComment();
-          boolean fim = false;
+      if (currentChar == '/') {
+        if (pos < sourceCode.length && sourceCode[pos] == '*') {
+          nextChar();
+          boolean comentarioFechado = false;
           while (!isEoF()) {
-            if (currentChar == '*' ) {
-              currentChar = nextCharInComment();
-              if (currentChar == '/')
-                fim = true;
-            }
-            if (fim) {
-              //Sai do '/' para o proximo caractere
-              currentChar = nextChar();
+            char dentroDoComentario = nextChar();
+            if (dentroDoComentario == '*' && pos < sourceCode.length && sourceCode[pos] == '/') {
+              nextChar();
+              comentarioFechado = true;
               break;
             }
           }
-          if (!fim)
-            throw new Exception("Fim do comentario de multiplas linhas desconhecido!");
+          if (!comentarioFechado) {
+            throw new Exception("Comentário de múltiplas linhas não foi fechado!");
+          }
+          continue;
         }
       }
 
@@ -109,7 +106,14 @@ public class Scanner {
           } else if (isDigit(currentChar)) {
             content += currentChar;
             state = 3;
-          } else if (isMathOperator(currentChar)) {
+          } else if(isPOINT(currentChar)) {
+            content += currentChar;
+            if (pos >= sourceCode.length || !isDigit(sourceCode[pos])) {
+              return new Token(TokenType.POINT,content);
+            }else {
+              state = 5;
+            }
+          }else if (isMathOperator(currentChar)) {
             content += currentChar;
             return new Token(TokenType.MATH_OPERATOR, content);
           } else if (isAssignment(currentChar) || isRelOperator(currentChar)) {
@@ -156,6 +160,9 @@ public class Scanner {
           } else if (isPOINT(currentChar)) {
             content += currentChar;
             state = 4;
+          } else if (isLetter(currentChar)){
+            content += currentChar;
+            throw new RuntimeException("Numero mal formado:" + content);
           } else {
             back();
             return new Token(TokenType.NUMBER, content);
@@ -172,6 +179,20 @@ public class Scanner {
             back();
             return new Token(TokenType.FRACTIONAL_NUMBER, content);
           }
+          break;
+
+        case 5:
+          if (isDigit(currentChar)){
+            content += currentChar;
+          }else{
+            if (isPOINT(currentChar)) {
+              content += currentChar;
+              throw new RuntimeException("Numero mal formado:" + content);
+            }
+            back();
+            return new Token(TokenType.FRACTIONAL_NUMBER,content);
+          }
+
           break;
       }
     }
